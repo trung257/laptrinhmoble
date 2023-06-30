@@ -1,33 +1,124 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { useNavigation, HeaderBackButton } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignUpScreen = () => {
   const navigation = useNavigation();
+  const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const storeData = async (value) => {
+  const validateFullName = (fullName) => {
+    const fullNameRegex = /^[a-zA-Z\s]*$/;
+    return fullNameRegex.test(fullName);
+  };
+
+  const validatePhoneNumber = (phoneNumber) => {
+    const phoneRegex = /^\d{10,11}$/;
+    return phoneRegex.test(phoneNumber);
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,23}$/;
+    return passwordRegex.test(password);
+  };
+
+  const storeData = async () => {
     try {
-      await AsyncStorage.setItem('my-key', value);
+      const user = {
+        fullName: fullName,
+        phoneNumber: phoneNumber,
+        email: email,
+        password: password,
+      };
+      const jsonValue = JSON.stringify(user);
+      await AsyncStorage.setItem('user', jsonValue);
     } catch (e) {
-      // saving error
+      console.error(e); 
+      Alert.alert('Lưu trữ dữ liệu thất bại'); 
     }
   };
 
   const handleSignUp = () => {
-    // Xử lý đăng ký
-    Alert.alert('Tạo tài khoản thành công !');
-    navigation.navigate('Login');
+    let valid = true;
+
+    if (!validateFullName(fullName)) {
+      setError('Invalid full name');
+      valid = false;
+    } else if (!validatePhoneNumber(phoneNumber)) {
+      setError('Invalid phone number');
+      valid = false;
+    } else if (!validateEmail(email)) {
+      setError('Invalid email address');
+      valid = false;
+    } else if (!validatePassword(password)) {
+      setError('Invalid password');
+      valid = false;
+    } else {
+      setError('');
+    }
+
+    if (valid) {
+      Alert.alert('Tạo tài khoản thành công!');
+      storeData();
+      navigation.navigate('Login');
+    } else {
+      Alert.alert('Thông tin đăng ký không hợp lệ!');
+    }
   };
 
   return (
     <View style={styles.container}>
       <HeaderBackButton onPress={() => navigation.navigate('Landing')} />
       <Text style={styles.title}>Create new account</Text>
-      <TextInput style={styles.input} placeholder="Full name" />
-      <TextInput style={styles.input} placeholder="Phone number" />
-      <TextInput style={styles.input} placeholder="Email Address" />
-      <TextInput style={styles.input} placeholder="Password" secureTextEntry={true} />
+      <TextInput
+        style={styles.input}
+        placeholder="Full name"
+        value={fullName}
+        onChangeText={(value) => {
+          if (validateFullName(value)) {
+            setFullName(value);
+          }
+        }}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Phone number"
+        value={phoneNumber}
+        onChangeText={(value) => {
+          if (validatePhoneNumber(value)) {
+            setPhoneNumber(value);
+          }
+        }}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Email Address"
+        value={email}
+        onChangeText={(value) => {
+          if (validateEmail(value)) {
+            setEmail(value);
+          }
+        }}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={(value) => {
+          if (validatePassword(value)) {
+            setPassword(value);
+          }
+        }}
+        secureTextEntry={true}
+      />
       <Button title="Sign up" onPress={handleSignUp} style={styles.button} />
     </View>
   );
